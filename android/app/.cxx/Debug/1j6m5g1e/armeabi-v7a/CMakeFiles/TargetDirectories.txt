@@ -1,0 +1,2 @@
+C:/Users/ilhag/Desktop/CinemaApp/android/app/.cxx/Debug/1j6m5g1e/armeabi-v7a/CMakeFiles/edit_cache.dir
+C:/Users/ilhag/Desktop/CinemaApp/android/app/.cxx/Debug/1j6m5g1e/armeabi-v7a/CMakeFiles/rebuild_cache.dir
