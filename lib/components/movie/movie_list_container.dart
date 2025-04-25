@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 
 class MovieListContainer extends StatelessWidget {
-  final double height;
+  final double? height;
   final bool isLoading;
-  final List<dynamic>? movieList;
+  final List<dynamic>? listOfThings;
   final Widget Function(List<dynamic>) builder;
 
   const MovieListContainer({
     super.key,
-    required this.height,
+    this.height,
     required this.isLoading,
-    required this.movieList,
+    required this.listOfThings,
     required this.builder,
   });
 
@@ -20,7 +20,7 @@ class MovieListContainer extends StatelessWidget {
       height: height,
       child: isLoading
           ? const Center(child: CircularProgressIndicator())
-          : movieList == null || movieList!.isEmpty
+          : listOfThings == null || listOfThings!.isEmpty
               ? const Center(
                   child: Text(
                     'Please ensure network is available',
@@ -32,7 +32,7 @@ class MovieListContainer extends StatelessWidget {
                     ),
                   ),
                 )
-              : builder(movieList!),
+              : builder(listOfThings!),
     );
   }
 }

@@ -33,12 +33,14 @@ Future<void> main() async {
     SystemUiOverlayStyle(
       statusBarColor: Colors.transparent, // Status bar transparent
       statusBarIconBrightness: Brightness.dark, // Dark icons in the status bar
-      systemNavigationBarColor: Colors.transparent, // Navigation bar transparent
+      systemNavigationBarColor: Color(0xffFFFFFF), // Navigation bar white
       systemNavigationBarIconBrightness: Brightness.dark, // Dark icons in the system nav bar
-      systemNavigationBarDividerColor: Colors.transparent, // Optional: Remove the divider line
+      systemNavigationBarDividerColor: Color(0xffFFFFFF), // Optional: Remove the divider line
     ),
   );
-  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  // SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual);
+  // SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge, overlays: [SystemUiOverlay.top]);
+  // SystemChrome.restoreSystemUIOverlays();
 
   // initialize FFI, for desktop platforms
   if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {

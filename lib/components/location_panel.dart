@@ -1,15 +1,57 @@
-import 'package:cinema_application/components/custom_icon_button.dart';
-import 'package:cinema_application/data/services/location_services.dart';
-import 'package:flutter/material.dart';
+import 'dart:ui';
 
-import 'package:cinema_application/data/helpers/apihelper.dart';
-import 'package:cinema_application/components/search_field.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 
+import 'package:cinema_application/data/helpers/apihelper.dart';
+import 'package:cinema_application/data/services/location_services.dart';
+
+import 'package:cinema_application/components/custom_icon_button.dart';
+import 'package:cinema_application/components/search_field.dart';
+
 class LocationPanel extends StatefulWidget {
-  final Function(String) onSelect;
+  final ValueChanged<String> onSelect;
 
   const LocationPanel({super.key, required this.onSelect});
+
+  static Future<void> openLocationPanel(BuildContext context, ValueChanged<String> onSelect) {
+    return showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: "Location Panel",
+      transitionDuration: Duration(milliseconds: 210),
+      pageBuilder: (context, anim1, anim2) {
+        return Stack(
+          children: [
+            // Static blur background
+            Positioned.fill(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
+                child: Container(
+                  color: Color(0xFFF9FAFB).withOpacity(0.3),
+                ),
+              ),
+            ),
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: Offset(0, 1),
+                  end: Offset(0, 0),
+                ).animate(CurvedAnimation(
+                  parent: anim1,
+                  curve: Curves.easeOut,
+                )),
+
+                // The Panel
+                child: LocationPanel(onSelect: onSelect)
+              )
+            )
+          ]
+        );
+      }
+    );
+  }
 
   @override
   State<LocationPanel> createState() => _LocationPanelState();
@@ -44,30 +86,48 @@ class _LocationPanelState extends State<LocationPanel> {
         if (!isQueryEmpty && allLocations != null) {
           filteredLocation = allLocations!.where((location) {
             return location['c_name'].toLowerCase().startsWith(query);
-            // location['c_name], karena value dari db bentuknya list dari maps, bukan raw values (harus ada key berarti)
           }).toList();
         } else {
           filteredLocation = [];
         }
       });
     });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Add a short delay before fetching
+      Future.delayed(Duration(milliseconds: 400), () async {
+        try {
+          final locations = await apiHelper.getListofLocation();
+          if (mounted) {
+            setState(() {
+              allLocations = locations;
+            });
+          }
+        } catch (e) {
+          debugPrint('Failed to fetch locations: $e');
+        }
+      });
+    });
   }
 
-  Future<List<dynamic>> _fetchLocations() async {
-    try {
-      final locationRows = await apiHelper.getListofLocation();
-      allLocations = locationRows;
-      return locationRows;
-    } catch (e) {
-      throw Exception('Failed to fetch locations.');
-    }
-  }
+  // Future<List<dynamic>> _fetchLocations() async {
+  //   try {
+  //     final locationRows = await apiHelper.getListofLocation();
+  //     allLocations = locationRows;
+  //     return locationRows;
+  //   } catch (e) {
+  //     throw Exception('Failed to fetch locations.');
+  //   }
+  // }
 
   Future<void> _handleLocationSelection(String location) async {
     setState(() {
       selectedLocation = location;
     });
     await locationServices.saveLocation(location);
+
+     if (!mounted) return;        // prevents further code if widget is gone
+
     widget.onSelect(location);
     Navigator.pop(context);
   }
@@ -99,109 +159,75 @@ class _LocationPanelState extends State<LocationPanel> {
           children: [
 
             // Close Button
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                CustomIconButton(
-                  icon: Icons.close,
-                  onPressed: () => Navigator.of(context).pop(),
-                  usingText: false,
-                  color: Color(0xFFFEC958)
-                ),
-              ],
-            ),
+            _closeButton(),
 
-            // Title and SearchField
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Text(
-                "Pick your location",
-                style: TextStyle(
-                  fontFamily: "Montserrat",
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF0E2522),
-                ),
-              ),
-            ),
-
+            // Title
+            _panelTitle(),
             SizedBox(height: 4),
 
-            SearchField(
-              controller: _controller,
-              isEmptyText: _isEmptyText,
-              suffixIcon: _isEmptyText,
-              requestFocus: false,
-              searchText: "Locations",
-            ),
-
+            // SearchField
+            _searchField(),
             SizedBox(height: 0),
 
             // Builder of Cities
             Expanded(
               child: allLocations == null
-                  ? FutureBuilder<List<dynamic>>(
-                      future: _fetchLocations(),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
-                          return Center(child: CircularProgressIndicator());
-                        } else if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
-                          return Center(
-                            child: Text(
-                              'Please ensure network is nvailable',
-                              style: const TextStyle(
-                                fontFamily: "Montserrat",
-                                fontSize: 15,
-                                fontWeight: FontWeight.w400,
-                                color: Color(0xFF0E2522),
-                              )
-                            )
-                          );
-                        } else {
-                          allLocations = snapshot.data!;
-                          return _buildLocationList();
-                        }
-                      },
-                    )
-                  : _buildLocationList(),
-            ),
+                ? Center(child: CircularProgressIndicator())
+                : _buildLocationList(),
+            )
           ],
         ),
       ),
     );
   }
 
-  Widget _buildLocationList() {
-    // if there is no query sent by user
-    if (_isEmptyText) {
-      return ListView.builder(
-        itemCount: allLocations!.length,
-        itemBuilder: (context, index) {
-          return ListTile(
-            title: Text(
-              allLocations![index]['c_name'],
-              style: const TextStyle(
-                fontFamily: "Montserrat",
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF0E2522),
-              ),
-            ),
-            onTap: () {
-              _handleLocationSelection(allLocations![index]['c_name']);
-            },
-          );
-        },
-      );
-    }
+  Widget _closeButton() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        CustomIconButton(
+          icon: Icons.close,
+          onPressed: () => Navigator.of(context).pop(),
+          usingText: false,
+          color: Color(0xFFFEC958)
+        ),
+      ],
+    );
+  }
 
-    // if the city not found
-    if (filteredLocation.isEmpty) {
+  Widget _panelTitle() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Text(
+        "Pick your location",
+        style: TextStyle(
+          fontFamily: "Montserrat",
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFF0E2522),
+        ),
+      ),
+    );
+  }
+
+  Widget _searchField() {
+    return SearchField(
+      controller: _controller,
+      isEmptyText: _isEmptyText,
+      suffixIcon: _isEmptyText,
+      requestFocus: false,
+      searchText: "Locations",
+    );
+  }
+
+  Widget _buildLocationList() {
+    List<dynamic> dataToShow = _isEmptyText ? allLocations! : filteredLocation;
+
+    if (!_isEmptyText && dataToShow.isEmpty) {
       return Container(
-        padding: EdgeInsets.only(top: 60),
+        padding: const EdgeInsets.only(top: 60),
         alignment: Alignment.topCenter,
-        child: 
-        Column(
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             SvgPicture.asset(
@@ -224,20 +250,22 @@ class _LocationPanelState extends State<LocationPanel> {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
-                color: Color(0xff000000).withOpacity(0.6),
+                color: Colors.black.withOpacity(0.6),
               ),
             ),
           ],
-        )
+        ),
       );
     }
-    
+
     return ListView.builder(
-      itemCount: filteredLocation.length,
+      padding: EdgeInsets.only(top: 14),
+      itemCount: dataToShow.length,
       itemBuilder: (context, index) {
+        final cityName = dataToShow[index]['c_name'];
         return ListTile(
           title: Text(
-            filteredLocation[index]['c_name'],
+            cityName,
             style: const TextStyle(
               fontFamily: "Montserrat",
               fontSize: 15,
@@ -245,9 +273,7 @@ class _LocationPanelState extends State<LocationPanel> {
               color: Color(0xFF0E2522),
             ),
           ),
-          onTap: () {
-            _handleLocationSelection(allLocations![index]['c_name']);
-          },
+          onTap: () => _handleLocationSelection(cityName),
         );
       },
     );

@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-class BottomNavbar extends StatelessWidget {
-  final int selectedIndex;
+class BottomNavbar extends StatefulWidget {
   final Function(int) onItemTap;
+  final int selectedIndex;
 
-  const BottomNavbar({
-    super.key,
-    required this.selectedIndex,
-    required this.onItemTap,
-  });
+  const BottomNavbar({super.key, required this.onItemTap, required this.selectedIndex});
 
+  @override
+  State<BottomNavbar> createState() => _BottomNavbarState();
+}
+
+class _BottomNavbarState extends State<BottomNavbar> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(48, 6, 48, 30),
+      padding: const EdgeInsets.fromLTRB(48, 6, 48, 8),
       decoration: BoxDecoration(
         color: const Color(0xFFFFFFFF), // White
         border: Border(
@@ -28,11 +29,11 @@ class BottomNavbar extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           buildNavIcon('assets/icon/home.svg', 0),
-          const SizedBox(width: 36),
+          const SizedBox(width: 28),
           buildNavIcon('assets/icon/ticket.svg', 1),
-          const SizedBox(width: 36),
+          const SizedBox(width: 28),
           buildNavIcon('assets/icon/transaction.svg', 2),
-          const SizedBox(width: 36),
+          const SizedBox(width: 28),
           buildNavIcon('assets/icon/profile.svg', 3),
         ],
       ),
@@ -40,15 +41,15 @@ class BottomNavbar extends StatelessWidget {
   }
 
   Widget buildNavIcon(String path, int index) {
-    final bool isSelected = selectedIndex == index;
-
     return GestureDetector(
-      onTap: () => onItemTap(index),
+      onTap: () {
+        widget.onItemTap(index);
+      },
       child: Container(
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFFFD580) : Colors.transparent,
+          color: widget.selectedIndex == index ? const Color(0xFFFFD580) : Colors.transparent,
           borderRadius: BorderRadius.circular(30),
         ),
         child: Center(
@@ -56,7 +57,7 @@ class BottomNavbar extends StatelessWidget {
             path,
             width: 24,
             height: 24,
-            colorFilter: isSelected
+            colorFilter: widget.selectedIndex == index
                 ? const ColorFilter.mode(Color(0xFFCD404A), BlendMode.srcIn)
                 : null,
           ),

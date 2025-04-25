@@ -1,10 +1,10 @@
-import 'dart:ui';
+// import 'dart:ui';
 
-import 'package:cinema_application/components/movie/movie_list_container.dart';
-import 'package:cinema_application/data/services/location_services.dart';
-import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:flutter/material.dart';
+// import 'package:flutter/services.dart';
 
+import 'package:cinema_application/data/services/location_services.dart';
 import 'package:cinema_application/data/services/movie_services.dart';
 
 import 'package:cinema_application/screens/booking/explore_movies.dart';
@@ -17,6 +17,7 @@ import 'package:cinema_application/components/custom_appbar.dart';
 import 'package:cinema_application/components/custom_icon_button.dart';
 import 'package:cinema_application/components/location_panel.dart';
 import 'package:cinema_application/components/section_icon.dart';
+import 'package:cinema_application/components/movie/movie_list_container.dart';
 import 'package:cinema_application/components/movie/movie_list_builder/carousel_movie_list.dart';
 import 'package:cinema_application/components/movie/movie_list_builder/horizontal_movie_list.dart';
 
@@ -72,6 +73,12 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  void _updateFromLocationPanel(selectedLocation) {
+    setState(() {
+      currentLocation = selectedLocation;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -91,7 +98,7 @@ class _HomePageState extends State<HomePage> {
             CustomIconButton(
               icon: Icons.location_on_outlined,
               onPressed: () {
-                _locationPanel(context);
+                LocationPanel.openLocationPanel(context, _updateFromLocationPanel);
               },
               usingText: true,
               theText: currentLocation,
@@ -138,12 +145,12 @@ class _HomePageState extends State<HomePage> {
                   // displaying vouchers and coupons
                   _displayVoucher(),
 
-                  SizedBox(height: 6),
+                  const SizedBox(height: 6),
 
                   // displaying now showing movies in box
                   _nowPlayingMovie(),
 
-                  SizedBox(height: 6),
+                  const SizedBox(height: 6),
 
                   // displaying upcoming movies in box
                   _upcomingMovie(),
@@ -156,57 +163,14 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  _locationPanel(BuildContext context) {
-    showGeneralDialog(
-      context: context,
-      barrierDismissible: true,
-      barrierLabel: "BlurredDialog",
-      transitionDuration: Duration(milliseconds: 210),
-      pageBuilder: (context, anim1, anim2) {
-        return Stack(
-          children: [
-            // Static blur background
-            Positioned.fill(
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
-                child: Container(
-                  color: Color(0xFFFFFFFF).withOpacity(0.35),
-                ),
-              ),
-            ),
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: SlideTransition(
-                position: Tween<Offset>(
-                  begin: Offset(0, 1),
-                  end: Offset(0, 0),
-                ).animate(CurvedAnimation(
-                  parent: anim1,
-                  curve: Curves.easeOut,
-                )),
-
-                // The Panel
-                child: LocationPanel(
-                  onSelect: (selectedLocation) {
-                    setState(() {
-                      currentLocation = selectedLocation;
-                    });
-                  }
-                )
-              )
-            )
-          ]
-        );
-      }
-    );
-  }
-
   Widget _adsSlider() {
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return LayoutBuilder(
       builder: (context, constraints) {
 
         // calculate aspect ratio by max height
-        double maxHeight = 174;
+        double maxHeight = screenHeight * 0.19;
         double aspectRatio = constraints.maxWidth / maxHeight;
 
         return CarouselSlider.builder(
@@ -302,9 +266,9 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // list popular movie
   Widget _nowPlayingMovie() {
     return Container(
+      padding: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
         color: const Color(0xffFFFFFF),
       ),
@@ -317,7 +281,7 @@ class _HomePageState extends State<HomePage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(14, 14, 14, 0),
+                padding: const EdgeInsets.fromLTRB(14, 16, 14, 0),
                 child: Text(
                   "Now Playing",
                   style: TextStyle(
@@ -329,7 +293,7 @@ class _HomePageState extends State<HomePage> {
                 )
               ),
               Padding(
-                padding: const EdgeInsets.fromLTRB(14, 14, 14, 0),
+                padding: const EdgeInsets.fromLTRB(14, 16, 14, 0),
                 child: GestureDetector(
                   onTap: () {
                     Navigator.push(
@@ -361,21 +325,20 @@ class _HomePageState extends State<HomePage> {
             ]
           ),
           
-          SizedBox(height: 14),
+          SizedBox(height: 16),
 
           // List Movie
           MovieListContainer(
             height: 440,              // 332 (slider) + 12 (gap) + 78 (title-genre) + 18 (aesthetic) 
             isLoading: isLoading, 
-            movieList: nowMovies, 
-            builder: (movies) => CarouselMovieList(desiredMovies: movies)
+            listOfThings: nowMovies, 
+            builder: (listOfThings) => CarouselMovieList(desiredMovies: listOfThings)
           )
         ]
       )
     );
   }
 
-  // list upcoming movie
   Widget _upcomingMovie() {
     return Container(
       padding: const EdgeInsets.only(bottom: 100),
@@ -391,7 +354,7 @@ class _HomePageState extends State<HomePage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(14, 14, 14, 0),
+                padding: const EdgeInsets.fromLTRB(14, 16, 14, 0),
                 child: Text(
                   "Upcoming",
                   style: TextStyle(
@@ -403,7 +366,7 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.fromLTRB(14, 14, 14, 0),
+                padding: const EdgeInsets.fromLTRB(14, 16, 14, 0),
                 child: GestureDetector(
                   onTap: () {
                     Navigator.push(
@@ -441,7 +404,7 @@ class _HomePageState extends State<HomePage> {
           MovieListContainer(
             height: 280,
             isLoading: isLoading,
-            movieList: upcomingMovies,
+            listOfThings: upcomingMovies,
             builder: (movies) => HorizontalMovieList(desiredMovies: movies)
           )
         ],

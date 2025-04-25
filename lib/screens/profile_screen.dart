@@ -12,7 +12,9 @@ import 'package:cinema_application/screens/profile/account_settings.dart';
 import 'package:cinema_application/components/custom_appbar.dart';
 
 class MyProfilePage extends StatefulWidget {
-  const MyProfilePage({super.key});
+  final VoidCallback onGoToTransaction;
+
+  const MyProfilePage({super.key, required this.onGoToTransaction});
 
   @override
   State<MyProfilePage> createState() => _MyProfilePageState();
@@ -93,109 +95,130 @@ class _MyProfilePageState extends State<MyProfilePage> {
                 child: IntrinsicHeight(
                   child: Column(
                     children: [
+
+                      // account section
                       _isLoggedIn ? loginAccount(context) : notLogin(context),
 
                       const SizedBox(height: 6),
 
-                      Container(
-                        padding: const EdgeInsets.fromLTRB(14, 14, 14, 26),
-                        color: const Color(0xffFFFFFF),
-                        child: Column(
-                          children: [
-                            Container(
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                "Your Usage Info",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 13,
-                                  color: const Color(0xFF0E2522).withOpacity(0.42),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 18),
-                            Column(
-                              children: [
-                                _buttonBuilder(context, Icons.favorite_border, "Wishlist", () {}),
-                                // _buttonBuilder(context, Icons.bookmark_outline_rounded, "Wishlist", () {}),
-                                // _buttonBuilder(context, Icons.push_pin_outlined, "Wishlist", () {}),
-                                const SizedBox(height: 26),
-                                _buttonBuilder(context, Icons.notifications_none_outlined, "Notifications", () {}),
-                                const SizedBox(height: 26),
-                                _buttonBuilder(context, Icons.history, "Your Activity", () {}),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
+                      // usage and permission section
+                      _usageSection(),
 
                       const SizedBox(height: 6),
 
-                      Container(
-                        padding: const EdgeInsets.fromLTRB(14, 14, 14, 26),
-                        color: const Color(0xffFFFFFF),
-                        child: Column(
-                          children: [
-                            Container(
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                "Your Payment",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 13,
-                                  color: const Color(0xFF0E2522).withOpacity(0.42),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 18),
-                            Column(
-                              children: [
-                                _buttonBuilder(context, Icons.receipt_long_outlined, "Transaction History", () {}),
-                                const SizedBox(height: 26),
-                                _buttonBuilder(context, Icons.payments_outlined, "Change Payment", () {}),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
+                      // payment section
+                      _paymentSection(),
 
                       const SizedBox(height: 6),
 
-                      Expanded(
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.fromLTRB(14, 14, 14, 26),
-                          color: const Color(0xffFFFFFF),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Your App Configuration",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 13,
-                                  color: const Color(0xFF0E2522).withOpacity(0.42),
-                                ),
-                              ),
-                              const SizedBox(height: 18),
-                              // _buttonBuilder(context, Icons.flare_rounded, "Appearance", () {}),
-                              _buttonBuilder(context, Icons.brightness_6_outlined, "Appearance", () {}),
-                              const SizedBox(height: 26),
-                              _buttonBuilder(context, Icons.image_outlined, "Image Quality", () {}),
-                              const SizedBox(height: 26),
-                              _buttonBuilder(context, Icons.language, "Language", () {}),
-                              const SizedBox(height: 26),
-                              _buttonBuilder(context, Icons.cleaning_services_outlined, "Clear Cache", () {}),
-                            ]
-                          )
-                        )
-                      )
+                      _appConfigurationSection()
                     ]
                   )
                 )
               )
             );
           }
+        )
+      )
+    );
+  }
+
+  Widget _usageSection() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 26),
+      color: const Color(0xffFFFFFF),
+      child: Column(
+        children: [
+          Container(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              "Your Usage Info",
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+                color: const Color(0xFF0E2522).withOpacity(0.42),
+              ),
+            ),
+          ),
+          const SizedBox(height: 18),
+          Column(
+            children: [
+              _buttonBuilder(context, Icons.favorite_border, "Wishlist", () {}),
+              // _buttonBuilder(context, Icons.bookmark_outline_rounded, "Wishlist", () {}),
+              // _buttonBuilder(context, Icons.push_pin_outlined, "Wishlist", () {}),
+              const SizedBox(height: 26),
+              _buttonBuilder(context, Icons.notifications_none_outlined, "Notifications", () {}),
+              const SizedBox(height: 26),
+              _buttonBuilder(context, Icons.history, "Your Activity", () {}),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _paymentSection() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 26),
+      color: const Color(0xffFFFFFF),
+      child: Column(
+        children: [
+          Container(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              "Your Payment",
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+                color: const Color(0xFF0E2522).withOpacity(0.42),
+              ),
+            ),
+          ),
+          const SizedBox(height: 18),
+          Column(
+            children: [
+
+              // Transcation History
+              _buttonBuilder(context, Icons.receipt_long_outlined, "Transaction History", widget.onGoToTransaction),
+
+              const SizedBox(height: 26),
+
+              // Change Payment
+              _buttonBuilder(context, Icons.payments_outlined, "Change Payment", () {}),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _appConfigurationSection() {
+    return Expanded(
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.fromLTRB(14, 14, 14, 26),
+        color: const Color(0xffFFFFFF),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Your App Configuration",
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+                color: const Color(0xFF0E2522).withOpacity(0.42),
+              ),
+            ),
+            const SizedBox(height: 18),
+            // _buttonBuilder(context, Icons.flare_rounded, "Appearance", () {}),
+            _buttonBuilder(context, Icons.brightness_6_outlined, "Appearance", () {}),
+            const SizedBox(height: 26),
+            _buttonBuilder(context, Icons.image_outlined, "Image Quality", () {}),
+            const SizedBox(height: 26),
+            _buttonBuilder(context, Icons.language, "Language", () {}),
+            const SizedBox(height: 26),
+            _buttonBuilder(context, Icons.cleaning_services_outlined, "Clear Cache", () {}),
+          ]
         )
       )
     );
@@ -208,7 +231,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
             decoration: BoxDecoration(
               color: Color(0xffFFFFFF),
             ),
@@ -430,6 +453,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
   Widget _buttonBuilder(BuildContext context, IconData icon, String text, VoidCallback onPressed) {
     return GestureDetector(
       onTap: onPressed,
+      behavior: HitTestBehavior.opaque, // empty space is tappable
       child: SizedBox(
         child: Row(
           children: [
@@ -459,8 +483,6 @@ class _MyProfilePageState extends State<MyProfilePage> {
       ),
     );
   }
-
-
 
   void logOutDiagog(BuildContext context) {
     showGeneralDialog(
