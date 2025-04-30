@@ -34,9 +34,7 @@ class _MainScreenState extends State<MainScreen> {
       MyPromosPage(),
       MyTransactionPage(),
       MyProfilePage(
-        onGoToTransaction: () {
-          _onItemTap(2);
-        },
+        onGoToTransaction: () => _onItemTap(2),
       ),
     ];
   }

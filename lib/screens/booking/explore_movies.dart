@@ -1,5 +1,8 @@
 import 'dart:io';
+import 'dart:ui';
 
+import 'package:cinema_application/components/filter_panel.dart';
+import 'package:cinema_application/components/show_dialog.dart';
 import 'package:flutter/material.dart';
 
 import 'package:cinema_application/data/services/location_services.dart';
@@ -30,7 +33,10 @@ class ExploreMovies extends StatefulWidget {
   State<ExploreMovies> createState() => _ExploreMoviesState();
 }
 
+
 class _ExploreMoviesState extends State<ExploreMovies> {
+  List<String> _options = ['Option 1', 'Option 2'];
+  String _selectedOption = 'Option 1';
   String currentLocation = '          ';
   String totalNowPlaying = "";
   String totalUpcoming = "";
@@ -99,6 +105,10 @@ class _ExploreMoviesState extends State<ExploreMovies> {
     setState(() => currentLocation = selectedLocation);
   }
 
+  // void _updateFilter(filterMovie) {
+  //   setState(() => currentOption = filterMovie);
+  // }
+
   bool isFilePath(String path) => !(path.startsWith('http://') || path.startsWith('https://'));
 
   @override
@@ -116,7 +126,11 @@ class _ExploreMoviesState extends State<ExploreMovies> {
             // Location button
             CustomIconButton(
               icon: Icons.location_on_outlined,
-              onPressed: () => LocationPanel.openLocationPanel(context, _updateFromLocationPanel),
+              onPressed: () => ShowDialog.openShowDialog(
+                context, 0.76, 
+                "Pick your location", 
+                LocationPanel(onSelect: _updateFromLocationPanel)
+              ),
               usingText: true,
               theText: currentLocation,
               color: Color(0xFFFEC958), // Orange
@@ -127,12 +141,10 @@ class _ExploreMoviesState extends State<ExploreMovies> {
             // Search button
             CustomIconButton(
               icon: Icons.search_rounded,
-              onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => SearchPage()),
-                  );
-                },
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => SearchPage()),
+              ),
               usingText: false,
               color: const Color(0xFFF686F6), // Magenta
             )
@@ -230,7 +242,17 @@ class _ExploreMoviesState extends State<ExploreMovies> {
                     // Filter Button
                     CustomIconButton(
                       icon: Icons.tune,
-                      onPressed: () {},
+                      // onPressed: () => ShowDialog.openShowDialog(context, 0.4, "Test", _filterPanel()),
+                      onPressed: () => ShowDialog.openShowDialog(
+                        context, 0.4,
+                        "Test",
+                        FilterPanel(
+                          title: "Choose sorting",
+                          options: _options,
+                          selectedOption: _selectedOption,
+                          onOptionSelected: (option) => setState(() => _selectedOption = option)
+                        )
+                      ),
                       usingText: false,
                       color: Color(0xff48E4d4), // Turqoise
                     ),
@@ -239,7 +261,7 @@ class _ExploreMoviesState extends State<ExploreMovies> {
 
                     // Grid View Button
                     CustomIconButton(
-                      icon: nowUsingGrid ? Icons.view_list : Icons.grid_view,
+                      icon: nowUsingGrid ? Icons.format_list_bulleted : Icons.grid_view,
                       onPressed: () => _gridViewButton(),
                       usingText: false,
                       color: Color(0xff46E1D1), // Turqoise
@@ -253,6 +275,156 @@ class _ExploreMoviesState extends State<ExploreMovies> {
       )
     );
   }
+
+  // Widget _filterPanel() {
+  //   return Container(
+  //     color: Colors.amber[400],
+  //     child: Column(
+  //       children: <Widget>[
+  //         ListTile(
+  //           title: const Text('Option 1'),
+  //           trailing: Radio(
+  //             value: options[0],
+  //             groupValue: currentOption,
+  //             onChanged: (value) {
+  //               _updateFilter(value);
+  //             },
+  //           ),
+  //           onTap: () {
+  //             setState(() {
+  //               _updateFilter(options[0]);
+  //             });
+  //           },
+  //           splashColor: Colors.cyan[500],
+  //         ),
+  //         ListTile(
+  //           title: const Text('Option 2'),
+  //           trailing: Radio(
+  //             value: options[1],
+  //             groupValue: currentOption,
+  //             onChanged: (value) {
+  //               _updateFilter(value);
+  //             },
+  //           ),
+  //           onTap: () {
+  //             _updateFilter(options[1]);
+  //           },
+  //           splashColor: Colors.cyan[500],
+  //         )
+  //       ],
+  //     ),
+  //   );
+  // }
+
+
+  // static _showFilter(BuildContext context) {
+  //   return showGeneralDialog(
+  //     context: context,
+  //     barrierDismissible: true,
+  //     barrierLabel: "Location Panel",
+  //     transitionDuration: Duration(milliseconds: 210),
+  //     transitionBuilder: (BuildContext context, Animation<double> animation, Animation<double> secondaryAnimation, Widget child) {
+  //       return FadeTransition(
+  //         opacity: CurvedAnimation(
+  //           parent: animation,
+  //           curve: Curves.easeOut,
+  //         ),
+  //         child: child,
+  //       );
+  //     },
+  //     pageBuilder: (context, anim1, anim2) {
+  //       return Stack(
+  //         children: [
+  //           // Static blur background
+  //           Positioned.fill(
+  //             child: BackdropFilter(
+  //               filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
+  //               child: Container(
+  //                 color: Color(0xffFFFFFF).withOpacity(0.3),
+  //               ),
+  //             ),
+  //           ),
+  //           Align(
+  //             alignment: Alignment.bottomCenter,
+  //             child: SlideTransition(
+  //               position: Tween<Offset>(
+  //                 begin: Offset(0, 1),
+  //                 end: Offset(0, 0),
+  //               ).animate(CurvedAnimation(
+  //                 parent: anim1,
+  //                 curve: Curves.easeOut,
+  //               )),
+
+  //               // The Panel
+  //               child: Material(
+  //                 color: Colors.transparent,
+  //                 elevation: 0,
+  //                 child: Container(
+  //                   height: MediaQuery.of(context).size.height * 0.76,
+  //                   width: MediaQuery.of(context).size.width * 1,
+  //                   padding: EdgeInsets.all(16),
+  //                   decoration: BoxDecoration(
+  //                     color: Color(0xFFFFFFFF),
+  //                     border: Border(
+  //                       top: BorderSide(
+  //                         color: const Color(0xFF0E2522), // Black
+  //                         width: 1.4
+  //                       ),
+  //                     ),
+  //                     borderRadius: BorderRadius.only(
+  //                       topLeft: Radius.circular(10),
+  //                       topRight: Radius.circular(10),
+  //                     ),
+  //                   ),
+  //                   child: Column(
+  //                     crossAxisAlignment: CrossAxisAlignment.start,
+  //                     children: [
+
+  //                       // Close Button
+  //                       Row(
+  //                         mainAxisAlignment: MainAxisAlignment.end,
+  //                         children: [
+  //                           CustomIconButton(
+  //                             icon: Icons.close,
+  //                             onPressed: () => Navigator.of(context).pop(),
+  //                             usingText: false,
+  //                             color: Color(0xFFFEC958)
+  //                           ),
+  //                         ],
+  //                       ),
+
+  //                       // Title
+  //                       Padding(
+  //                         padding: const EdgeInsets.symmetric(vertical: 8),
+  //                         child: Text(
+  //                           "Pick your location",
+  //                           style: TextStyle(
+  //                             fontFamily: "Montserrat",
+  //                             fontSize: 16,
+  //                             fontWeight: FontWeight.w600,
+  //                             color: Color(0xFF0E2522),
+  //                           ),
+  //                         ),
+  //                       ),
+  //                       SizedBox(height: 4),
+
+  //                       // Builder of Cities
+  //                       Expanded(
+  //                         child: allLocations == null
+  //                           ? Center(child: CircularProgressIndicator())
+  //                           : _buildLocationList(),
+  //                       )
+  //                     ],
+  //                   ),
+  //                 ),
+  //               )
+  //             )
+  //           )
+  //         ]
+  //       );
+  //     }
+  //   );
+  // }
 
   Widget _listViewMovieList(dynamic desiredMovies) {
     return Expanded(

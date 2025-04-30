@@ -6,7 +6,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:cinema_application/data/helpers/apihelper.dart';
 import 'package:cinema_application/data/services/location_services.dart';
 
-import 'package:cinema_application/components/custom_icon_button.dart';
+// import 'package:cinema_application/components/custom_icon_button.dart';
 import 'package:cinema_application/components/search_field.dart';
 
 class LocationPanel extends StatefulWidget {
@@ -20,6 +20,15 @@ class LocationPanel extends StatefulWidget {
       barrierDismissible: true,
       barrierLabel: "Location Panel",
       transitionDuration: Duration(milliseconds: 210),
+      transitionBuilder: (BuildContext context, Animation<double> animation, Animation<double> secondaryAnimation, Widget child) {
+        return FadeTransition(
+          opacity: CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOut,
+          ),
+          child: child,
+        );
+      },
       pageBuilder: (context, anim1, anim2) {
         return Stack(
           children: [
@@ -28,7 +37,7 @@ class LocationPanel extends StatefulWidget {
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
                 child: Container(
-                  color: Color(0xFFF9FAFB).withOpacity(0.3),
+                  color: Color(0xffFFFFFF).withOpacity(0.3),
                 ),
               ),
             ),
@@ -58,6 +67,7 @@ class LocationPanel extends StatefulWidget {
 }
 
 class _LocationPanelState extends State<LocationPanel> {
+  bool _showExpanded = false;
   String selectedLocation = '-';
 
   final apiHelper = ApiHelper();
@@ -72,14 +82,17 @@ class _LocationPanelState extends State<LocationPanel> {
   void initState() {
     super.initState();
 
+    /// Just give the delay so the dialog can appear SMOOTH
+    Future.delayed(Duration(milliseconds: 300), () {
+      if (mounted) setState(() => _showExpanded = true);
+    });
+
     _controller.addListener(() {
       final query = _controller.text.toLowerCase();
       final isQueryEmpty = query.isEmpty;
 
       if (isQueryEmpty != _isEmptyText) {
-        setState(() {
-          _isEmptyText = isQueryEmpty;
-        });
+        setState(() => _isEmptyText = isQueryEmpty);
       }
 
       setState(() {
@@ -110,23 +123,11 @@ class _LocationPanelState extends State<LocationPanel> {
     });
   }
 
-  // Future<List<dynamic>> _fetchLocations() async {
-  //   try {
-  //     final locationRows = await apiHelper.getListofLocation();
-  //     allLocations = locationRows;
-  //     return locationRows;
-  //   } catch (e) {
-  //     throw Exception('Failed to fetch locations.');
-  //   }
-  // }
-
   Future<void> _handleLocationSelection(String location) async {
-    setState(() {
-      selectedLocation = location;
-    });
+    setState(() => selectedLocation = location);
     await locationServices.saveLocation(location);
 
-     if (!mounted) return;        // prevents further code if widget is gone
+    if (!mounted) return;
 
     widget.onSelect(location);
     Navigator.pop(context);
@@ -134,79 +135,22 @@ class _LocationPanelState extends State<LocationPanel> {
   
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      elevation: 0,
-      child: Container(
-        height: MediaQuery.of(context).size.height * 0.76,
-        width: MediaQuery.of(context).size.width * 1,
-        padding: EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Color(0xFFFFFFFF),
-          border: Border(
-            top: BorderSide(
-              color: const Color(0xFF0E2522), // Black
-              width: 1.4
-            ),
-          ),
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(10),
-            topRight: Radius.circular(10),
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-
-            // Close Button
-            _closeButton(),
-
-            // Title
-            _panelTitle(),
-            SizedBox(height: 4),
-
-            // SearchField
-            _searchField(),
-            SizedBox(height: 0),
-
-            // Builder of Cities
-            Expanded(
-              child: allLocations == null
-                ? Center(child: CircularProgressIndicator())
-                : _buildLocationList(),
-            )
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _closeButton() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        CustomIconButton(
-          icon: Icons.close,
-          onPressed: () => Navigator.of(context).pop(),
-          usingText: false,
-          color: Color(0xFFFEC958)
-        ),
-      ],
-    );
-  }
 
-  Widget _panelTitle() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Text(
-        "Pick your location",
-        style: TextStyle(
-          fontFamily: "Montserrat",
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-          color: Color(0xFF0E2522),
-        ),
-      ),
+        // SearchField
+        _searchField(),
+        SizedBox(height: 0),
+
+        // Builder of Cities
+        if (_showExpanded)
+          Expanded(
+            child: allLocations == null
+              ? Center(child: CircularProgressIndicator())
+              : _buildLocationList(),
+          ),
+      ]
     );
   }
 
