@@ -1,7 +1,7 @@
 // import 'dart:ui';
 
 import 'package:carousel_slider/carousel_slider.dart';
-import 'package:cinema_application/components/show_dialog.dart';
+import 'package:cinema_application/components/open_dialog.dart';
 import 'package:flutter/material.dart';
 // import 'package:flutter/services.dart';
 
@@ -98,7 +98,7 @@ class _HomePageState extends State<HomePage> {
             // Location button
             CustomIconButton(
               icon: Icons.location_on_outlined,
-              onPressed: () => ShowDialog.openShowDialog(context, 0.76, "Pick your location", LocationPanel(onSelect: _updateFromLocationPanel)),
+              onPressed: () => openDialog(context, 0.76, "Pick your location", LocationPanel(onSelect: _updateFromLocationPanel)),
               usingText: true,
               theText: currentLocation,
               color: Color(0xFFFEC958), // Orange

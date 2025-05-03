@@ -14,54 +14,6 @@ class LocationPanel extends StatefulWidget {
 
   const LocationPanel({super.key, required this.onSelect});
 
-  static Future<void> openLocationPanel(BuildContext context, ValueChanged<String> onSelect) {
-    return showGeneralDialog(
-      context: context,
-      barrierDismissible: true,
-      barrierLabel: "Location Panel",
-      transitionDuration: Duration(milliseconds: 210),
-      transitionBuilder: (BuildContext context, Animation<double> animation, Animation<double> secondaryAnimation, Widget child) {
-        return FadeTransition(
-          opacity: CurvedAnimation(
-            parent: animation,
-            curve: Curves.easeOut,
-          ),
-          child: child,
-        );
-      },
-      pageBuilder: (context, anim1, anim2) {
-        return Stack(
-          children: [
-            // Static blur background
-            Positioned.fill(
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
-                child: Container(
-                  color: Color(0xffFFFFFF).withOpacity(0.3),
-                ),
-              ),
-            ),
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: SlideTransition(
-                position: Tween<Offset>(
-                  begin: Offset(0, 1),
-                  end: Offset(0, 0),
-                ).animate(CurvedAnimation(
-                  parent: anim1,
-                  curve: Curves.easeOut,
-                )),
-
-                // The Panel
-                child: LocationPanel(onSelect: onSelect)
-              )
-            )
-          ]
-        );
-      }
-    );
-  }
-
   @override
   State<LocationPanel> createState() => _LocationPanelState();
 }
@@ -141,6 +93,7 @@ class _LocationPanelState extends State<LocationPanel> {
 
         // SearchField
         _searchField(),
+        
         SizedBox(height: 0),
 
         // Builder of Cities

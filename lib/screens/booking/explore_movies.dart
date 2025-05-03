@@ -1,8 +1,9 @@
 import 'dart:io';
 import 'dart:ui';
 
-import 'package:cinema_application/components/filter_panel.dart';
-import 'package:cinema_application/components/show_dialog.dart';
+import 'package:cinema_application/components/open_dialog.dart';
+import 'package:cinema_application/components/selection_panel.dart';
+import 'package:cinema_application/data/helpers/apihelper.dart';
 import 'package:flutter/material.dart';
 
 import 'package:cinema_application/data/services/location_services.dart';
@@ -35,7 +36,7 @@ class ExploreMovies extends StatefulWidget {
 
 
 class _ExploreMoviesState extends State<ExploreMovies> {
-  List<String> _options = ['Option 1', 'Option 2'];
+  // List<String> _options = ['Option 1', 'Option 2'];
   String _selectedOption = 'Option 1';
   String currentLocation = '          ';
   String totalNowPlaying = "";
@@ -44,6 +45,7 @@ class _ExploreMoviesState extends State<ExploreMovies> {
   List<dynamic>? allNowPlaying;
   List<dynamic>? allUpcoming;
   late dynamic desiredMovies;
+  late List<String> allLocations;
 
   late bool nowShowingIsClicked;
   bool nowUsingGrid = false;
@@ -51,6 +53,7 @@ class _ExploreMoviesState extends State<ExploreMovies> {
 
   final movieServices = MovieServices();
   final locationServices = LocationServices();
+  final apiHelper = ApiHelper();
 
   @override
   void initState() {
@@ -67,13 +70,13 @@ class _ExploreMoviesState extends State<ExploreMovies> {
 
     _loadLocation();
     _fetchMovies();
+
   }
 
   Future<void> _loadLocation() async {
     final location = await locationServices.getLocation();
-    setState(() {
-      currentLocation = location;
-    });
+    setState(() => currentLocation = location);
+    allLocations = (await apiHelper.getListofLocation()).map<String>((loc) => loc['c_name'] as String).toList();
   }
 
   Future<void> _fetchMovies() async {
@@ -126,7 +129,7 @@ class _ExploreMoviesState extends State<ExploreMovies> {
             // Location button
             CustomIconButton(
               icon: Icons.location_on_outlined,
-              onPressed: () => ShowDialog.openShowDialog(
+              onPressed: () => openDialog(
                 context, 0.76, 
                 "Pick your location", 
                 LocationPanel(onSelect: _updateFromLocationPanel)
@@ -243,12 +246,15 @@ class _ExploreMoviesState extends State<ExploreMovies> {
                     CustomIconButton(
                       icon: Icons.tune,
                       // onPressed: () => ShowDialog.openShowDialog(context, 0.4, "Test", _filterPanel()),
-                      onPressed: () => ShowDialog.openShowDialog(
-                        context, 0.4,
+                      onPressed: () async => openDialog(
+                        context,
+                        0.8,
                         "Test",
-                        FilterPanel(
-                          title: "Choose sorting",
-                          options: _options,
+                        SelectionPanel(
+                          useSearchField: true,
+                          // options: _options,
+                          // options: (await apiHelper.getListofLocation()).map<String>((loc) => loc['c_name'] as String).toList(),
+                          options: allLocations,
                           selectedOption: _selectedOption,
                           onOptionSelected: (option) => setState(() => _selectedOption = option)
                         )
