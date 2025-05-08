@@ -1,9 +1,10 @@
-// import 'dart:ui';
+import 'dart:io';
 
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:cinema_application/components/fetch/fetch_state_builder.dart';
 import 'package:cinema_application/components/open_dialog.dart';
+import 'package:cinema_application/data/helpers/fetch_status.dart';
 import 'package:flutter/material.dart';
-// import 'package:flutter/services.dart';
 
 import 'package:cinema_application/data/services/location_services.dart';
 import 'package:cinema_application/data/services/movie_services.dart';
@@ -18,7 +19,6 @@ import 'package:cinema_application/components/custom_appbar.dart';
 import 'package:cinema_application/components/custom_icon_button.dart';
 import 'package:cinema_application/components/location_panel.dart';
 import 'package:cinema_application/components/section_icon.dart';
-import 'package:cinema_application/components/movie/movie_list_container.dart';
 import 'package:cinema_application/components/movie/movie_list_builder/carousel_movie_list.dart';
 import 'package:cinema_application/components/movie/movie_list_builder/horizontal_movie_list.dart';
 
@@ -30,62 +30,40 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  String currentLocation = '          ';
-  List<dynamic>? nowMovies;
-  List<dynamic>? upcomingMovies;
-  bool isLoading = true;
+  /// location to be shown
+  String currentLocation = "         ";
+
+  /// movies data
+  List<dynamic>? _nowMovies;
+  List<dynamic>? _upcomingMovies;
+
+  /// view control
+  FetchStatus _fetchStatus = FetchStatus.loading;
+
+  /// services
+  final movieServices = MovieServices();
+  final locationServices = LocationServices();
 
   // debug purpose -> masih ada yg akses: iklan
   late List<MovieList> listmoviefirst;
   late List<AllMovie> allmovie;
 
-  final movieServices = MovieServices();
-  final locationServices = LocationServices();
-
   @override
   initState() {
     super.initState();
-    _loadLocation();
-    _fetchMovies();
+    /// fetch location and movies
+    _initData();
 
-    // debug purpose -> masih ada yg akses: iklan
+    /// debug purpose -> masih ada yg akses: iklan
     listmoviefirst = MovieList.getList();
     allmovie = AllMovie.getList();
-  }
-
-  Future<void> _loadLocation() async {
-    String location = await locationServices.getLocation();
-    setState(() {
-      currentLocation = location;
-    });
-  }
-
-  Future<void> _fetchMovies() async {
-    setState(() => isLoading = true);
-    try {
-      var movies = await movieServices.fetchMovies(currentLocation);
-      setState(() {
-        nowMovies = movies['nowMovies'];
-        upcomingMovies = movies['upcomingMovies'];
-        isLoading = false;
-      });
-    } catch (e) {
-      setState(() => isLoading = false);
-    }
-  }
-
-  void _updateFromLocationPanel(selectedLocation) {
-    setState(() {
-      currentLocation = selectedLocation;
-    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Color(0xFFf0f3f8), // Cool White
-      
-      // appbar
+      /// appbar
       appBar: CustomAppBar(
         useAppTitle: false,
         centerText: "Cinema App",
@@ -94,19 +72,22 @@ class _HomePageState extends State<HomePage> {
         trailingButton: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-
-            // Location button
+            /// location button
             CustomIconButton(
               icon: Icons.location_on_outlined,
-              onPressed: () => openDialog(context, 0.76, "Pick your location", LocationPanel(onSelect: _updateFromLocationPanel)),
+              onPressed: () => openDialog(
+                context,
+                0.76,
+                "Pick your location",
+                LocationPanel(onSelect: _updateFromLocationPanel)
+              ),
               usingText: true,
               theText: currentLocation,
               color: Color(0xFFFEC958), // Orange
             ),
+            const SizedBox(width: 6),
 
-            SizedBox(width: 6),
-
-            // Search button
+            /// search button
             CustomIconButton(
               icon: Icons.search_rounded,
               onPressed: () {
@@ -122,11 +103,11 @@ class _HomePageState extends State<HomePage> {
         )
       ),
 
-      // body
+      /// body
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async {
-            _loadLocation();
+            _loadSavedLocation();
             _fetchMovies();
           },
           child: SingleChildScrollView(
@@ -137,22 +118,19 @@ class _HomePageState extends State<HomePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-
-                  // displaying ads
+                  /// displaying ads
                   _adsSlider(),
 
-                  // displaying vouchers and coupons
+                  /// displaying vouchers and coupons
                   _displayVoucher(),
-
                   const SizedBox(height: 6),
 
-                  // displaying now showing movies in box
-                  _nowPlayingMovie(),
-
+                  /// displaying now showing movies in box
+                  _nowPlaying(),
                   const SizedBox(height: 6),
 
-                  // displaying upcoming movies in box
-                  _upcomingMovie(),
+                  /// displaying upcoming movies in box
+                  _upcoming(),
                 ]
               )
             )
@@ -164,14 +142,11 @@ class _HomePageState extends State<HomePage> {
 
   Widget _adsSlider() {
     final screenHeight = MediaQuery.of(context).size.height;
-
     return LayoutBuilder(
       builder: (context, constraints) {
-
         // calculate aspect ratio by max height
         double maxHeight = screenHeight * 0.19;
         double aspectRatio = constraints.maxWidth / maxHeight;
-
         return CarouselSlider.builder(
           itemCount: listmoviefirst.length,
           itemBuilder: (context, index, realIndex) {
@@ -181,7 +156,6 @@ class _HomePageState extends State<HomePage> {
               children: [
                 SizedBox(
                   child: ClipRRect(
-                    // borderRadius: BorderRadius.circular(8),
                     child: Image.asset(
                       movie.images,
                       fit: BoxFit.cover
@@ -265,7 +239,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _nowPlayingMovie() {
+  Widget _nowPlaying() {
     return Container(
       padding: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
@@ -274,63 +248,18 @@ class _HomePageState extends State<HomePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-
-          // Header
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(14, 16, 14, 0),
-                child: Text(
-                  "Now Playing",
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Color(0xFF0E2522), // Black
-                    fontWeight: FontWeight.w600,
-                    fontFamily: "Montserrat"
-                  )
-                )
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(14, 16, 14, 0),
-                child: GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ExploreMovies(
-                          nowShowingIsClicked: true,
-                          nowMovies: nowMovies,
-                          upcomingMovies: upcomingMovies
-                        )
-                      )
-                    ).then((_) {
-                      setState(() {
-                        _loadLocation();
-                      });
-                    });
-                  },
-                  child: Text(
-                    "See All",
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      fontFamily: "Montserrat",
-                      color: Color(0xFF4A6761) // Dark Tosca
-                    )
-                  )
-                )
-              )
-            ]
+          /// header
+          _headerSection(
+            "Now Playing",
+            () => _navigateToExplore(true)
           ),
-          
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
 
-          // List Movie
-          MovieListContainer(
-            height: 440,              // 332 (slider) + 12 (gap) + 78 (title-genre) + 18 (aesthetic) 
-            isLoading: isLoading, 
-            listOfThings: nowMovies, 
+          /// List Movie
+          FetchStateBuilder(
+            height: 440, 
+            fetchStatus: _fetchStatus, 
+            listOfThings: _nowMovies, 
             builder: (listOfThings) => CarouselMovieList(desiredMovies: listOfThings)
           )
         ]
@@ -338,76 +267,118 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _upcomingMovie() {
+  Widget _upcoming() {
     return Container(
-      padding: const EdgeInsets.only(bottom: 100),
+      padding: const EdgeInsets.only(bottom: 80),
       decoration: BoxDecoration(
         color: const Color(0xffFFFFFF),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-
-          // Header
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(14, 16, 14, 0),
-                child: Text(
-                  "Upcoming",
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Color(0xFF0E2522), // Black
-                    fontWeight: FontWeight.w600,
-                    fontFamily: "Montserrat",
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(14, 16, 14, 0),
-                child: GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ExploreMovies(
-                          nowShowingIsClicked: false,
-                          nowMovies: nowMovies,
-                          upcomingMovies: upcomingMovies
-                        )
-                      ),
-                    ).then((_) {
-                      setState(() {
-                        _loadLocation();
-                      });
-                    });
-                  },
-                  child: Text(
-                    "See All",
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      fontFamily: "Montserrat",
-                      color: Color(0xFF4A6761) // Dark Tosca
-                    ),
-                  ),
-                ),
-              ),
-            ],
+          /// header
+          _headerSection(
+            "Upcoming", 
+            () => _navigateToExplore(false)
           ),
-          
-          SizedBox(height: 14),
+          const SizedBox(height: 14),
 
-          // List movie
-          MovieListContainer(
+          /// List movie
+          FetchStateBuilder(
             height: 280,
-            isLoading: isLoading,
-            listOfThings: upcomingMovies,
+            fetchStatus: _fetchStatus,
+            listOfThings: _upcomingMovies,
             builder: (movies) => HorizontalMovieList(desiredMovies: movies)
           )
         ],
       ),
     );
+  }
+
+  Widget _headerSection(String title, VoidCallback onSeeAll) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 16, 14, 0),
+          child: Text(
+            title,
+            style: TextStyle(
+              fontSize: 16,
+              color: Color(0xFF0E2522), // Black
+              fontWeight: FontWeight.w600,
+              fontFamily: "Montserrat",
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 16, 14, 0),
+          child: GestureDetector(
+            onTap: onSeeAll,
+            child: Text(
+              "See All",
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                fontFamily: "Montserrat",
+                color: Color(0xFF4A6761) // Dark Tosca
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _initData() async {
+    await _loadSavedLocation();
+    await _fetchMovies();
+  }
+
+  Future<void> _loadSavedLocation() async {
+    String location = await locationServices.getSavedLocation();
+    setState(() => currentLocation = location);
+  }
+
+  Future<void> _fetchMovies() async {
+    setState(() => _fetchStatus = FetchStatus.loading);
+
+    try {
+      final movies = await movieServices.fetchMovies(currentLocation);
+      final now = List.from(movies['nowMovies'] ?? []);
+      final upcoming = List.from(movies['upcomingMovies'] ?? []);
+
+      setState(() {
+        _nowMovies = now;
+        _upcomingMovies = upcoming;
+        _fetchStatus =
+            (now.isEmpty && upcoming.isEmpty) ? FetchStatus.empty : FetchStatus.success;
+      });
+    } on SocketException {
+      setState(() => _fetchStatus = FetchStatus.connectionError);
+    } catch (e, stackTrace) {
+      setState(() => _fetchStatus = FetchStatus.unknownError);
+      debugPrint("Error fetching movies: $e");
+      debugPrintStack(stackTrace: stackTrace);
+    }
+  }
+
+  void _updateFromLocationPanel(selectedLocation) {
+    setState(() => currentLocation = selectedLocation);
+  }
+
+  void _navigateToExplore(bool nowShowingIsClicked) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ExploreMovies(
+          nowShowingIsClicked: nowShowingIsClicked,
+          nowMovies: _nowMovies,
+          upcomingMovies: _upcomingMovies,
+        ),
+      ),
+    ).then((_) {
+      _loadSavedLocation();
+    });
   }
 }

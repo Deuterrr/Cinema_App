@@ -29,7 +29,8 @@ class ApiHelper {
         )
       ''')
       .eq('m_status', movieStatus)
-      .eq('schedule.studio.cinema.city.c_name', cityName)
+      // .eq('schedule.studio.cinema.city.c_name', cityName)
+      .eq('schedule.studio.cinema.city.c_name', "Jakarta")
       .execute();
 
     if (response.status == 200) {

@@ -9,7 +9,7 @@ class LocationServices {
     await sharedprefsutil.saveString(_locationKey, location);
   }
 
-  Future<String> getLocation() async {
-    return await sharedprefsutil.getString(_locationKey) ?? '          ';
+  Future<String> getSavedLocation() async {
+    return await sharedprefsutil.getString(_locationKey) ?? 'Jakarta';
   }
 }

@@ -16,7 +16,10 @@ class MovieServices {
         .getDesireMoviesByCityandSchedule(movieStatus, currentLocation);
 
       await Future.wait(desiredMovies.map((movie) async {
-        movie['m_imageurl'] = await _cacheMovieImage('m_imageurl', movie['m_title']);
+        final url = movie['m_imageurl'];
+        if (url != null && url is String && url.startsWith('http')) {
+          movie['m_imageurl'] = await _cacheMovieImage(url, movie['m_title']);
+        }
       }));
 
       return desiredMovies;

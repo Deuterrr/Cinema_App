@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-// Widget to build a section with an icon, title, and value
 class SectionWithIcon extends StatelessWidget {
   final String title;
   final String value;
   final String icon;
   final bool haveIcon;
 
-  // Constructor
   const SectionWithIcon({
     required this.title,
     required this.value,

@@ -1,12 +1,9 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 
 import 'package:cinema_application/data/helpers/apihelper.dart';
 import 'package:cinema_application/data/services/location_services.dart';
 
-// import 'package:cinema_application/components/custom_icon_button.dart';
 import 'package:cinema_application/components/search_field.dart';
 
 class LocationPanel extends StatefulWidget {
@@ -20,7 +17,8 @@ class LocationPanel extends StatefulWidget {
 
 class _LocationPanelState extends State<LocationPanel> {
   bool _showExpanded = false;
-  String selectedLocation = '-';
+  String selectedLocation = ' ';
+  String _currentLocation = ' ';
 
   final apiHelper = ApiHelper();
   final locationServices = LocationServices();
@@ -34,18 +32,19 @@ class _LocationPanelState extends State<LocationPanel> {
   void initState() {
     super.initState();
 
-    /// Just give the delay so the dialog can appear SMOOTH
+    _loadSavedCurrentLocation();
+
+    /// give delay so the dialog can appear SMOOTHLY (they dont)
     Future.delayed(Duration(milliseconds: 300), () {
       if (mounted) setState(() => _showExpanded = true);
     });
 
+    /// search logic
     _controller.addListener(() {
       final query = _controller.text.toLowerCase();
       final isQueryEmpty = query.isEmpty;
 
-      if (isQueryEmpty != _isEmptyText) {
-        setState(() => _isEmptyText = isQueryEmpty);
-      }
+      if (isQueryEmpty != _isEmptyText) setState(() => _isEmptyText = isQueryEmpty);
 
       setState(() {
         if (!isQueryEmpty && allLocations != null) {
@@ -58,23 +57,23 @@ class _LocationPanelState extends State<LocationPanel> {
       });
     });
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Add a short delay before fetching
-      Future.delayed(Duration(milliseconds: 400), () async {
-        try {
-          final locations = await apiHelper.getListofLocation();
-          if (mounted) {
-            setState(() {
-              allLocations = locations;
-            });
-          }
-        } catch (e) {
-          debugPrint('Failed to fetch locations: $e');
-        }
-      });
+    /// fecth the data
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      try {
+        final locations = await apiHelper.getListofLocation();
+        if (mounted) setState(() => allLocations = locations);
+      } catch (e) {
+        debugPrint('Failed to fetch locations: $e');
+      }
     });
   }
 
+  Future<void> _loadSavedCurrentLocation() async {
+    String location = await locationServices.getSavedLocation();
+    setState(() => _currentLocation = location);
+  }
+
+  /// handle user selection
   Future<void> _handleLocationSelection(String location) async {
     setState(() => selectedLocation = location);
     await locationServices.saveLocation(location);
@@ -87,23 +86,26 @@ class _LocationPanelState extends State<LocationPanel> {
   
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
 
-        // SearchField
-        _searchField(),
-        
-        SizedBox(height: 0),
+          // Search Field
+          _searchField(),
+          
+          SizedBox(height: 0),
 
-        // Builder of Cities
-        if (_showExpanded)
-          Expanded(
-            child: allLocations == null
-              ? Center(child: CircularProgressIndicator())
-              : _buildLocationList(),
-          ),
-      ]
+          // Builder of Cities
+          if (_showExpanded)
+            Expanded(
+              child: allLocations == null
+                ? Center(child: CircularProgressIndicator())
+                : _buildLocationList(),
+            ),
+        ]
+      )
     );
   }
 
@@ -160,14 +162,15 @@ class _LocationPanelState extends State<LocationPanel> {
       itemCount: dataToShow.length,
       itemBuilder: (context, index) {
         final cityName = dataToShow[index]['c_name'];
+        bool temp = _currentLocation == cityName ? true : false; // is it current location?
         return ListTile(
           title: Text(
             cityName,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: "Montserrat",
               fontSize: 15,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF0E2522),
+              color: temp ? Color(0xFFCD404A) : Color(0xFF0E2522),
             ),
           ),
           onTap: () => _handleLocationSelection(cityName),

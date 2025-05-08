@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:cinema_application/components/custom_icon_button.dart';
 import 'package:flutter/material.dart';
 
@@ -23,7 +21,7 @@ class DialogPanel extends StatelessWidget {
       child: Container(
         height: MediaQuery.of(context).size.height * panelHeightScale,
         width: MediaQuery.of(context).size.width * 1,
-        padding: EdgeInsets.all(16),
+        padding: EdgeInsets.only(top: 16),
         decoration: BoxDecoration(
           color: Color(0xFFFFFFFF),
           border: Border(
@@ -40,15 +38,20 @@ class DialogPanel extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Container(
+              padding: const EdgeInsets.fromLTRB(16, 6, 16,  0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _panelTitle(panelHeader),
+                  _closeButton(context)
+                ],
+              ),
+            ),
 
-            _closeButton(context),
-            
-            _panelTitle(panelHeader),
-            SizedBox(height: 4),
+            SizedBox(height: 12),
 
             Expanded(child: mainContent),
-            
-            _confirmButton()
           ],
         ),
       ),
@@ -56,45 +59,28 @@ class DialogPanel extends StatelessWidget {
   }
 
   Widget _closeButton(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        CustomIconButton(
-          icon: Icons.close,
-          onPressed: () => Navigator.of(context).pop(),
-          usingText: false,
-          color: Color(0xFFFEC958),
-        ),
-      ],
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 2),
+      child: CustomIconButton(
+        icon: Icons.close,
+        onPressed: () => Navigator.of(context).pop(),
+        usingText: false,
+        color: Color(0xFFFEC958),
+      )
     );
   }
 
   Widget _panelTitle(String panelHeader) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.only(left: 1),
       child: Text(
         panelHeader,
         style: TextStyle(
           fontFamily: "Montserrat",
-          fontSize: 16,
+          fontSize: 18,
           fontWeight: FontWeight.w600,
           color: Color(0xFF0E2522),
         ),
-      ),
-    );
-  }
-
-  Widget _confirmButton() {
-    return Container(
-      height: 40,
-      width: double.infinity,
-      color: Colors.cyan[300],
-      child: ElevatedButton(
-        onPressed: () {},
-        child: Container(
-          color: Colors.amber,
-          child: Text("test")
-        )
       ),
     );
   }
